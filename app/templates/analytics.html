@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}My Analytics — BookHaven{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1><i class="fas fa-chart-bar"></i> My Analytics</h1>
+        <p>Your shopping insights and spending trends</p>
+    </div>
+
+    <div class="analytics-dashboard" id="user-analytics">
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="stats-cards">
+            <div class="stat-card stat-orders">
+                <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value" id="stat-total-orders">—</span>
+                    <span class="stat-label">Total Orders</span>
+                </div>
+            </div>
+            <div class="stat-card stat-spent">
+                <div class="stat-icon"><i class="fas fa-indian-rupee-sign"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value" id="stat-total-spent">—</span>
+                    <span class="stat-label">Total Spent</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-card" id="monthly-chart-card">
+                <h3><i class="fas fa-chart-line"></i> Monthly Spending</h3>
+                <canvas id="monthlySpendingChart" height="280"></canvas>
+            </div>
+            <div class="chart-card" id="authors-chart-card">
+                <h3><i class="fas fa-pen-nib"></i> Favorite Authors</h3>
+                <canvas id="favAuthorsChart" height="280"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="chart-card" id="recent-orders-card">
+            <h3><i class="fas fa-clock-rotate-left"></i> Recent Orders</h3>
+            <div class="recent-orders-table" id="recent-orders-table">
+                <p class="text-muted">Loading...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+async function loadUserAnalytics() {
+    try {
+        const res = await fetch('/api/analytics/user');
+        const data = await res.json();
+
+        // Stats
+        document.getElementById('stat-total-orders').textContent = data.total_orders;
+        document.getElementById('stat-total-spent').textContent = '₹' + data.total_spent.toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+        // Monthly Spending Chart
+        if (data.monthly_spending.length) {
+            const labels = data.monthly_spending.map(m => MONTHS[m.month - 1] + ' ' + m.year);
+            const values = data.monthly_spending.map(m => m.total);
+            new Chart(document.getElementById('monthlySpendingChart'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Spending (₹)',
+                        data: values,
+                        backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                        borderColor: 'rgba(99, 102, 241, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // Favorite Authors Chart
+        if (data.favorite_authors.length) {
+            const authorColors = [
+                'rgba(99, 102, 241, 0.8)', 'rgba(236, 72, 153, 0.8)',
+                'rgba(34, 197, 94, 0.8)', 'rgba(251, 146, 60, 0.8)',
+                'rgba(14, 165, 233, 0.8)'
+            ];
+            new Chart(document.getElementById('favAuthorsChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.favorite_authors.map(a => a.author),
+                    datasets: [{
+                        data: data.favorite_authors.map(a => a.count),
+                        backgroundColor: authorColors,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        // Recent Orders Table
+        const container = document.getElementById('recent-orders-table');
+        if (data.recent_orders.length) {
+            let html = '<table class="data-table"><thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead><tbody>';
+            data.recent_orders.forEach(o => {
+                const date = new Date(o.created_at).toLocaleDateString('en-IN');
+                const itemCount = o.items.length;
+                html += `<tr>
+                    <td>#${o.id}</td>
+                    <td>${date}</td>
+                    <td>${itemCount} item${itemCount > 1 ? 's' : ''}</td>
+                    <td>₹${o.total_amount.toFixed(2)}</td>
+                    <td><span class="status-badge status-${o.payment_status}">${o.payment_status}</span></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = '<p class="text-muted">No orders yet.</p>';
+        }
+
+    } catch (err) {
+        console.error('Analytics load failed:', err);
+    }
+}
+
+loadUserAnalytics();
+</script>
+{% endblock %}

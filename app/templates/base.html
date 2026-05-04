@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BookHaven — Your premier online book store. Browse, shop, and discover your next favorite read.">
+    <title>{% block title %}BookHaven{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Ambient Background Lighting -->
+    <div class="ambient-light-1"></div>
+    <div class="ambient-light-2"></div>
+    <div class="ambient-light-3"></div>
+    <!-- Navigation -->
+    <nav class="navbar" id="main-navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('books.books_page') }}" class="nav-brand">
+                <i class="fas fa-book-open"></i>
+                <span>BookHaven</span>
+            </a>
+
+            <div class="nav-search">
+                <form action="{{ url_for('books.books_page') }}" method="GET" id="search-form">
+                    <div class="search-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input type="text" name="search" placeholder="Search books, authors..." 
+                               value="{{ request.args.get('search', '') }}" id="search-input">
+                    </div>
+                </form>
+            </div>
+
+            <div class="nav-links">
+                <a href="{{ url_for('books.books_page') }}" class="nav-link" id="nav-books">
+                    <i class="fas fa-book"></i> Books
+                </a>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('cart.cart_page') }}" class="nav-link nav-cart" id="nav-cart" title="Cart" style="font-size: 1.2rem; padding: 0.5rem;">
+                        <i class="fas fa-shopping-cart"></i>
+                    </a>
+                    <a href="{{ url_for('payment.order_history_page') }}" class="nav-link" id="nav-orders">
+                        <i class="fas fa-receipt"></i> Orders
+                    </a>
+                    <a href="{{ url_for('analytics.user_analytics_page') }}" class="nav-link" id="nav-analytics">
+                        <i class="fas fa-chart-bar"></i> Analytics
+                    </a>
+                    {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link nav-admin" id="nav-admin">
+                            <i class="fas fa-shield-halved"></i> Admin
+                        </a>
+                    {% endif %}
+                    <div class="nav-user-section">
+                        <span class="nav-user-name">
+                            <i class="fas fa-user-circle"></i> {{ current_user.name }}
+                        </span>
+                        <a href="{{ url_for('auth.logout') }}" class="nav-link btn-logout" id="nav-logout">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('auth.login_page') }}" class="nav-link" id="nav-login">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                    <a href="{{ url_for('auth.register_page') }}" class="nav-link btn-primary-nav" id="nav-register">
+                        <i class="fas fa-user-plus"></i> Register
+                    </a>
+                {% endif %}
+            </div>
+
+            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container" id="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}" id="flash-msg">
+                        <span>{{ message }}</span>
+                        <button class="flash-close" onclick="this.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fas fa-book-open"></i>
+                <span>BookHaven</span>
+            </div>
+            <p class="footer-text">© 2026 BookHaven. Built with Flask & ❤️</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

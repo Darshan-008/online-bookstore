@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard — BookHaven{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1><i class="fas fa-shield-halved"></i> Admin Dashboard</h1>
+        <p>Platform analytics and management</p>
+    </div>
+
+    <div class="admin-nav-cards">
+        <a href="{{ url_for('admin.manage_books_page') }}" class="admin-nav-card">
+            <i class="fas fa-book"></i>
+            <span>Manage Books</span>
+        </a>
+        <a href="{{ url_for('admin.manage_users_page') }}" class="admin-nav-card">
+            <i class="fas fa-users"></i>
+            <span>Manage Users</span>
+        </a>
+    </div>
+
+    <div class="analytics-dashboard" id="admin-analytics">
+        <!-- Stats Cards -->
+        <div class="stats-grid stats-grid-4" id="admin-stats">
+            <div class="stat-card stat-revenue">
+                <div class="stat-icon"><i class="fas fa-indian-rupee-sign"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value" id="admin-revenue">—</span>
+                    <span class="stat-label">Total Revenue</span>
+                </div>
+            </div>
+            <div class="stat-card stat-orders">
+                <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value" id="admin-orders">—</span>
+                    <span class="stat-label">Total Orders</span>
+                </div>
+            </div>
+            <div class="stat-card stat-users">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value" id="admin-users">—</span>
+                    <span class="stat-label">Registered Users</span>
+                </div>
+            </div>
+            <div class="stat-card stat-books">
+                <div class="stat-icon"><i class="fas fa-book"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value" id="admin-books">—</span>
+                    <span class="stat-label">Books Listed</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3><i class="fas fa-chart-line"></i> Monthly Revenue</h3>
+                <canvas id="adminRevenueChart" height="280"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3><i class="fas fa-trophy"></i> Top Selling Books</h3>
+                <canvas id="topBooksChart" height="280"></canvas>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3><i class="fas fa-user-plus"></i> New Users by Month</h3>
+                <canvas id="newUsersChart" height="280"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+async function loadAdminAnalytics() {
+    try {
+        const res = await fetch('/api/analytics/admin');
+        const data = await res.json();
+
+        document.getElementById('admin-revenue').textContent = '₹' + data.total_revenue.toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('admin-orders').textContent = data.total_orders;
+        document.getElementById('admin-users').textContent = data.total_users;
+        document.getElementById('admin-books').textContent = data.total_books;
+
+        // Revenue Chart
+        if (data.monthly_revenue.length) {
+            new Chart(document.getElementById('adminRevenueChart'), {
+                type: 'line',
+                data: {
+                    labels: data.monthly_revenue.map(m => MONTHS[m.month - 1] + ' ' + m.year),
+                    datasets: [{
+                        label: 'Revenue (₹)',
+                        data: data.monthly_revenue.map(m => m.total),
+                        borderColor: 'rgba(99, 102, 241, 1)',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointBackgroundColor: 'rgba(99, 102, 241, 1)'
+                    }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        // Top Books Chart
+        if (data.top_books.length) {
+            const colors = ['#6366f1','#ec4899','#22c55e','#fb923c','#0ea5e9',
+                            '#a855f7','#f43f5e','#14b8a6','#eab308','#64748b'];
+            new Chart(document.getElementById('topBooksChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.top_books.map(b => b.title.length > 20 ? b.title.slice(0, 20) + '…' : b.title),
+                    datasets: [{
+                        label: 'Units Sold',
+                        data: data.top_books.map(b => b.sold),
+                        backgroundColor: colors,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // New Users Chart
+        if (data.new_users.length) {
+            new Chart(document.getElementById('newUsersChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.new_users.map(m => MONTHS[m.month - 1] + ' ' + m.year),
+                    datasets: [{
+                        label: 'New Users',
+                        data: data.new_users.map(m => m.count),
+                        backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+        }
+
+    } catch (err) { console.error('Admin analytics error:', err); }
+}
+
+loadAdminAnalytics();
+</script>
+{% endblock %}

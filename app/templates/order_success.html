@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Order Confirmed — BookHaven{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="order-success" id="order-success">
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h1>Order Placed Successfully!</h1>
+        <p class="success-subtitle">Thank you for shopping with BookHaven</p>
+
+        <div class="order-details-card">
+            <div class="order-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Order ID</span>
+                    <span class="meta-value">#{{ order.id }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Invoice</span>
+                    <span class="meta-value">{{ order.invoice_number }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Payment</span>
+                    <span class="meta-value">{{ order.payment_method|upper }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Status</span>
+                    <span class="meta-value status-badge status-{{ order.payment_status }}">{{ order.payment_status|capitalize }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Date</span>
+                    <span class="meta-value">{{ order.created_at.strftime('%d %b %Y, %I:%M %p') }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Total</span>
+                    <span class="meta-value total-highlight">₹{{ '%.2f'|format(order.total_amount) }}</span>
+                </div>
+            </div>
+
+            <h3>Shipping Details</h3>
+            <div class="order-items-list" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-surface); border-radius: 8px;">
+                <p style="margin: 0;"><strong>Address:</strong> {{ order.shipping_address or 'N/A' }}</p>
+                <p style="margin: 0;"><strong>City:</strong> {{ order.shipping_city or 'N/A' }}</p>
+                <p style="margin: 0;"><strong>ZIP Code:</strong> {{ order.shipping_zip or 'N/A' }}</p>
+            </div>
+
+            <h3>Items Ordered</h3>
+            <div class="order-items-list">
+                {% for item in order.items %}
+                <div class="order-item-row">
+                    <span class="item-name">{{ item.book.title if item.book else 'N/A' }}</span>
+                    <span class="item-qty">× {{ item.quantity }}</span>
+                    <span class="item-price">₹{{ '%.2f'|format(item.price * item.quantity) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="success-actions">
+            <a href="{{ url_for('invoice.download_invoice', order_id=order.id) }}" class="btn btn-primary" id="download-invoice">
+                <i class="fas fa-file-pdf"></i> Download Invoice
+            </a>
+            <a href="{{ url_for('payment.order_history_page') }}" class="btn btn-outline">
+                <i class="fas fa-list"></i> View All Orders
+            </a>
+            <a href="{{ url_for('books.books_page') }}" class="btn btn-outline">
+                <i class="fas fa-book"></i> Continue Shopping
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

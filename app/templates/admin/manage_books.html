@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Manage Books — Admin — BookHaven{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <a href="{{ url_for('admin.dashboard') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+
+    <div class="page-header">
+        <h1><i class="fas fa-book"></i> Manage Books</h1>
+    </div>
+
+    <!-- Add Book Form -->
+    <div class="admin-form-card" id="add-book-form-container">
+        <h2 id="form-title"><i class="fas fa-plus-circle"></i> Add New Book</h2>
+        <form action="{{ url_for('admin.add_book') }}" method="POST" class="admin-form" id="book-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" name="title" id="title" placeholder="Book title" required>
+                </div>
+                <div class="form-group">
+                    <label for="author">Author</label>
+                    <input type="text" name="author" id="author" placeholder="Author name" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="price">Price (₹)</label>
+                    <input type="number" name="price" id="price" step="0.01" min="0" placeholder="299.00" required>
+                </div>
+                <div class="form-group">
+                    <label for="image_url">Image URL</label>
+                    <input type="url" name="image_url" id="image_url" placeholder="https://...">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea name="description" id="description" rows="3" placeholder="Book description..."></textarea>
+            </div>
+            <div class="form-actions" style="display: flex; gap: 1rem; align-items: center;">
+                <button type="submit" class="btn btn-primary" id="book-form-submit">
+                    <i class="fas fa-plus" id="submit-icon"></i> <span id="submit-text">Add Book</span>
+                </button>
+                <button type="button" class="btn btn-outline" id="cancel-edit" style="display: none;" onclick="resetForm()">
+                    Cancel Edit
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Books Table -->
+    <div class="admin-table-card">
+        <h2>All Books ({{ books|length }})</h2>
+        {% if books %}
+        <div class="table-responsive">
+            <table class="data-table" id="books-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for book in books %}
+                    <tr id="book-row-{{ book.id }}">
+                        <td>{{ book.id }}</td>
+                        <td><strong>{{ book.title }}</strong></td>
+                        <td>{{ book.author }}</td>
+                        <td>₹{{ '%.2f'|format(book.price) }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button type="button" class="btn btn-sm btn-outline edit-book-btn"
+                                        data-id="{{ book.id }}"
+                                        data-title="{{ book.title }}"
+                                        data-author="{{ book.author }}"
+                                        data-price="{{ book.price }}"
+                                        data-image="{{ book.image_url }}"
+                                        data-desc="{{ book.description }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <a href="{{ url_for('books.book_detail_page', book_id=book.id) }}" class="btn btn-sm btn-outline">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <form action="{{ url_for('admin.delete_book', book_id=book.id) }}" method="POST"
+                                      onsubmit="return confirm('Delete this book?')">
+                                    <button class="btn btn-sm btn-danger" id="delete-book-{{ book.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No books yet.</p>
+        {% endif %}
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function resetForm() {
+    const form = document.getElementById('book-form');
+    form.reset();
+    form.action = "{{ url_for('admin.add_book') }}";
+    document.getElementById('form-title').innerHTML = '<i class="fas fa-plus-circle"></i> Add New Book';
+    document.getElementById('submit-icon').className = 'fas fa-plus';
+    document.getElementById('submit-text').textContent = 'Add Book';
+    document.getElementById('cancel-edit').style.display = 'none';
+}
+
+document.querySelectorAll('.edit-book-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        document.getElementById('title').value = btn.dataset.title;
+        document.getElementById('author').value = btn.dataset.author;
+        document.getElementById('price').value = btn.dataset.price;
+        document.getElementById('image_url').value = btn.dataset.image;
+        document.getElementById('description').value = btn.dataset.desc;
+        
+        const form = document.getElementById('book-form');
+        form.action = `/admin/api/books/${id}`;
+        
+        document.getElementById('form-title').innerHTML = '<i class="fas fa-edit"></i> Edit Book';
+        document.getElementById('submit-icon').className = 'fas fa-save';
+        document.getElementById('submit-text').textContent = 'Save Changes';
+        document.getElementById('cancel-edit').style.display = 'inline-flex';
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+});
+</script>
+{% endblock %}

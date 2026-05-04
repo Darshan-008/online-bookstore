@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Browse Books — BookHaven{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    {% if search %}
+    <div class="page-header" style="margin-bottom: 2rem;">
+        <h1><i class="fas fa-book"></i> Search Results</h1>
+        <p class="search-info">Showing results for "<strong>{{ search }}</strong>" — {{ books|length }} found
+            <a href="{{ url_for('books.books_page') }}" class="clear-search">Clear</a>
+        </p>
+    </div>
+    {% else %}
+    <div class="hero-section">
+        <div class="hero-content">
+            <div class="hero-badge">Welcome to BookHaven</div>
+            <h1 class="hero-title">Discover Your Next <span class="gradient-text">Adventure</span></h1>
+            <p class="hero-subtitle">Explore a curated collection of premium literature, immersive stories, and infinite knowledge.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if books %}
+    <div class="books-grid" id="books-grid">
+        {% for book in books %}
+        <div class="book-card" id="book-card-{{ book.id }}">
+            <div class="book-cover">
+                {% if book.image_url %}
+                    <img src="{{ book.image_url }}" alt="{{ book.title }}" loading="lazy">
+                {% else %}
+                    <div class="book-cover-placeholder">
+                        <i class="fas fa-book"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="book-info">
+                <h3 class="book-title">
+                    <a href="{{ url_for('books.book_detail_page', book_id=book.id) }}">{{ book.title }}</a>
+                </h3>
+                <p class="book-author"><i class="fas fa-pen-nib"></i> {{ book.author }}</p>
+                <div class="book-footer">
+                    <span class="book-price">₹{{ '%.2f'|format(book.price) }}</span>
+                    {% if current_user.is_authenticated %}
+                    <form action="{{ url_for('cart.add_to_cart') }}" method="POST" class="add-to-cart-form">
+                        <input type="hidden" name="book_id" value="{{ book.id }}">
+                        <button type="submit" class="btn btn-sm btn-accent" id="add-cart-{{ book.id }}">
+                            <i class="fas fa-cart-plus"></i> Add
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-search"></i>
+        <h2>No books found</h2>
+        <p>Try a different search term or browse all books.</p>
+        <a href="{{ url_for('books.books_page') }}" class="btn btn-primary">Browse All</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

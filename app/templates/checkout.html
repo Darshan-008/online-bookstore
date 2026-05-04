@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Checkout — BookHaven{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <a href="{{ url_for('cart.cart_page') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Back to Cart
+    </a>
+
+    <div class="page-header">
+        <h1><i class="fas fa-credit-card"></i> Checkout</h1>
+        <p>Review your order and select a payment method</p>
+    </div>
+
+    <div class="checkout-layout">
+        <div class="checkout-items">
+            <h2>Order Items</h2>
+            {% for item in items %}
+            <div class="checkout-item">
+                <div class="checkout-item-info">
+                    <strong>{{ item.book.title }}</strong>
+                    <span class="text-muted">by {{ item.book.author }}</span>
+                </div>
+                <div class="checkout-item-qty">× {{ item.quantity }}</div>
+                <div class="checkout-item-price">₹{{ '%.2f'|format(item.book.price * item.quantity) }}</div>
+            </div>
+            {% endfor %}
+            <div class="checkout-total">
+                <span>Total Amount</span>
+                <span class="total-price">₹{{ '%.2f'|format(total) }}</span>
+            </div>
+        </div>
+
+        <div class="checkout-payment" id="payment-section">
+            <form action="{{ url_for('payment.checkout') }}" method="POST" id="checkout-form">
+                
+                <h2>Shipping Information</h2>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label for="shipping_address">Street Address</label>
+                        <input type="text" name="shipping_address" id="shipping_address" placeholder="123 Book St" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="shipping_city">City</label>
+                        <input type="text" name="shipping_city" id="shipping_city" placeholder="New York" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="shipping_zip">ZIP Code</label>
+                        <input type="text" name="shipping_zip" id="shipping_zip" placeholder="10001" required>
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 1.5rem;">Payment Method</h2>
+                <div class="payment-options">
+                    <label class="payment-option selected" id="opt-card">
+                        <input type="radio" name="payment_method" value="card" checked>
+                        <div class="payment-option-content">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Credit / Debit Card</span>
+                        </div>
+                    </label>
+                    <label class="payment-option" id="opt-upi">
+                        <input type="radio" name="payment_method" value="upi">
+                        <div class="payment-option-content">
+                            <i class="fas fa-mobile-screen-button"></i>
+                            <span>UPI Payment</span>
+                        </div>
+                    </label>
+                    <label class="payment-option" id="opt-cod">
+                        <input type="radio" name="payment_method" value="cod">
+                        <div class="payment-option-content">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Cash on Delivery</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Card Details Form (Dynamically shown/hidden) -->
+                <div id="card-details-section" style="margin-top: 1.5rem;">
+                    <h3>Card Details</h3>
+                    <div class="form-group">
+                        <label for="card_name">Name on Card</label>
+                        <input type="text" name="card_name" id="card_name" placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="card_number">Card Number</label>
+                        <input type="text" name="card_number" id="card_number" placeholder="XXXX XXXX XXXX XXXX" maxlength="19">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="card_expiry">Expiry (MM/YY)</label>
+                            <input type="text" name="card_expiry" id="card_expiry" placeholder="12/28" maxlength="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="card_cvv">CVV</label>
+                            <input type="password" name="card_cvv" id="card_cvv" placeholder="123" maxlength="4">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkout-note" style="margin-top: 1.5rem;">
+                    <i class="fas fa-shield-halved"></i>
+                    <span>Your payment is secure and encrypted</span>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full btn-lg" id="place-order-btn">
+                    <i class="fas fa-check-circle"></i> Place Order — ₹{{ '%.2f'|format(total) }}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('input[name="payment_method"]').forEach(input => {
+    input.addEventListener('change', (e) => {
+        // Handle visual selection
+        document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+        e.target.closest('.payment-option').classList.add('selected');
+        
+        // Handle card details visibility
+        const cardSection = document.getElementById('card-details-section');
+        const cardInputs = cardSection.querySelectorAll('input');
+        if (e.target.value === 'card') {
+            cardSection.style.display = 'block';
+            cardInputs.forEach(i => i.required = true);
+        } else {
+            cardSection.style.display = 'none';
+            cardInputs.forEach(i => i.required = false);
+        }
+    });
+});
+// Initialize state on load
+document.querySelector('input[name="payment_method"]:checked').dispatchEvent(new Event('change'));
+</script>
+{% endblock %}
