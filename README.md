@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # BookHaven — Online Book Store
 
 BookHaven is a premium full-stack online book store application built with Python and Flask. It features a stunning, "Web 3.0" inspired dark theme UI with advanced glassmorphism, 3D CSS hover effects, and ambient background animations.
@@ -75,3 +76,6 @@ online-bookstore/
 ## License
 
 This project is created for educational and demonstration purposes.
+=======
+# online-bookstore
+>>>>>>> ef24176e66492d5436cb7f8e95ac0b77227abe27
