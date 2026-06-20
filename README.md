@@ -76,6 +76,4 @@ online-bookstore/
 ## License
 
 This project is created for educational and demonstration purposes.
-=======
-# online-bookstore
->>>>>>> ef24176e66492d5436cb7f8e95ac0b77227abe27
+
